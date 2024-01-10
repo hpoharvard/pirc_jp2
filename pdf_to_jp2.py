@@ -22,11 +22,11 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.addHandler(fileHandler)
     l.addHandler(streamHandler)  
 
-setup_logger('log_validation', r"C:\\temp\\log_validation.txt")
-setup_logger('log_description', r"C:\\temp\\log_description.txt")
+setup_logger('log_pdf_validation', r"C:\\temp\\log_pdf_validation.txt")
+setup_logger('log_pdf_description', r"C:\\temp\\log_pdf_description.txt")
 
-logger_validation = logging.getLogger('log_validation')
-logger_description = logging.getLogger('log_description')
+logger_pdf_validation = logging.getLogger('log_pdf_validation')
+logger_pdf_description = logging.getLogger('log_pdf_description')
 
 
 #def convert_pdf_to_jp2(pdf_path, output_folder):
@@ -52,7 +52,7 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename):
 def listoutputfile(output_folder):
     print (output_folder)
     dir_list = os.listdir(output_folder)
-    logger_validation.info('Check if the jp2 files are valid: ')
+    logger_pdf_validation.info('Check if the jp2 files are valid: ')
     for i in dir_list:
 
         z = output_folder + '/' + i
@@ -61,9 +61,9 @@ def listoutputfile(output_folder):
             myResult = jpylyzer.checkOneFile(z)
             status=myResult.findtext('isValid')
             print (status)
-            logger_validation.info('File Name: ' + str(i) + " - Status: " + status)
+            logger_pdf_validation.info('File Name: ' + str(i) + " - Status: " + status)
         except:
-            logger_validation.info('File Name: ' + str(i) + " - No able to convert it to jp2000")
+            logger_pdf_validation.info('File Name: ' + str(i) + " - No able to convert it to jp2000")
 # inspect folder and subfolders and process all the files
 def crawl_finder(path_crawl):
     for root, dir_names, file_names in os.walk(path_crawl):
@@ -81,9 +81,9 @@ def crawl_finder(path_crawl):
                     reader = PdfReader(z)
                     #print(str(reader.metadata))
                     #print(str(reader.pdf_header))
-                    logger_description.info('File Name: ' + str(i) + " - PDF Metadata: " + str(reader.metadata).replace("'",'').replace('{','').replace('}','').replace('/','') + " - PDF Version: " + str(reader.pdf_header)) 
+                    logger_pdf_description.info('File Name: ' + str(i) + " - PDF Metadata: " + str(reader.metadata).replace("'",'').replace('{','').replace('}','').replace('/','') + " - PDF Version: " + str(reader.pdf_header)) 
                 except:
-                    logger_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
+                    logger_pdf_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
 if __name__ == "__main__":
         
     # Replace 'output_folder' with the desired output folder path
