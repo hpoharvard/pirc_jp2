@@ -33,7 +33,7 @@ logger_pdf_description = logging.getLogger('log_pdf_description')
 
 def convert_pdf_to_jp2(pdf_path, output_folder, filename):
     # Convert PDF to images
-    images = convert_from_path(pdf_path)
+    images = convert_from_path(pdf_path, dpi=300)
     print(images)
     # Create output folder if it doesn't exist
     if not os.path.exists(output_folder):
@@ -42,7 +42,7 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename):
     # Save each image as JP2 format
     for i, image in enumerate(images):    
         print (i)
-        jp2_path = os.path.join(output_folder, f'p_{filename}.jp2')
+        jp2_path = os.path.join(output_folder, f'p_{filename}_{i}.jp2')
            
         ###jp2_path = os.path.join(output_folder, f'page_{i + 1}.jp2')
         #image.save(jp2_path, format='jp2', quality_mode='dB', quality_layers=[80])
