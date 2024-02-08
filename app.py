@@ -12,7 +12,8 @@ import exiftoll
 
 EXIFTOOL_PATH = r'C:\Program Files\exiftool\exiftool(-k).exe'
 
-timestr = time.strftime("%Y-%m%d")
+#timestr = time.strftime("%Y-%m%d")
+#timestr = time.strftime("%Y%m%d-%H%M%S")
 
 logger_pdf = logging.getLogger('log_pdf')
 
@@ -74,6 +75,7 @@ class FolderSelectorApp(QWidget):
     def run_function(self):
         if self.folder_path1 and self.folder_path2:
             setup_logger('log_pdf', self.folder_path2 + r"\\log_pdf.txt")
+            logger_pdf.info('Start time: ' + str(time.strftime("%Y%m%d-%H%M%S")))
             
             # Replace this function with your custom logic to run
             print(f'Running function with Folder Input: {self.folder_path1} and Folder Output: {self.folder_path2}')
@@ -81,6 +83,7 @@ class FolderSelectorApp(QWidget):
             self.label4.setText('Process finished!')
             # setting up background color 
             self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
+            logger_pdf.info('End time: ' + str(time.strftime("%Y%m%d-%H%M%S")))
         else:
             print('Please select both folders before running the function.')
 
@@ -181,36 +184,52 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
                     title = '-Title = NA'                    
                     print (title)
                 else:                     
-                    title = '-Title = ' + infofoo['Title']                    
-                    print(title)
+                    if(infofoo['Title'] == ''):
+                        title = '-Title = NA'                   
+                        print(title)
+                    else:
+                        title = '-Title = ' + infofoo['Title']                    
+                        print(title)
                 # get the Creator
                 if(dict(infofoo).get('Creator') is None):                          
                     creator = '-Creator = NA'
                     print (creator)
                 else:
-                    creator = '-Creator = ' + infofoo['Creator']
-                    print(creator)
+                    if(infofoo['Creator'] == ''):
+                        creator = '-Creator = NA'
+                    else:    
+                        creator = '-Creator = ' + infofoo['Creator']
+                        print(creator)
                 # get the Author
                 if(dict(infofoo).get('Author') is None):                          
                     author = '-Author = NA'
                     print (author)
                 else:
-                    author = '-Author =' + infofoo['Author']
-                    print(author)
+                    if(infofoo['Author'] == ''):
+                        author = '-Author = NA'
+                    else:    
+                        author = '-Author =' + infofoo['Author']
+                        print(author)
                 # get the Producer
                 if(dict(infofoo).get('Producer') is None):                          
                     producer = '-Producer = NA'
                     print (producer)
                 else:
-                    producer = '-Producer = ' + infofoo['Producer']
+                    if(infofoo['Producer'] == ''):
+                        producer = '-Producer = NA'
+                    else:
+                        producer = '-Producer = ' + infofoo['Producer']
                     print(producer)
                 # get the PDF version 
                 if(dict(infofoo).get('PDF version') is None):                          
                     pdfVersion = '-PDFVersion = NA'
                     print (pdfVersion)
                 else:
-                    pdfVersion = '-PDFVersion = ' + infofoo['PDF version']
-                    print(pdfVersion)   
+                    if(infofoo['PDF version'] == ''):
+                        pdfVersion = '-PDFVersion = NA'
+                    else:    
+                        pdfVersion = '-PDFVersion = ' + infofoo['PDF version']
+                        print(pdfVersion)   
 
                 with exiftoll.exiftool.ExifTool(EXIFTOOL_PATH) as et:                
                     et.execute(bytes(title.encode()),bytes(fileno.encode())) # title
