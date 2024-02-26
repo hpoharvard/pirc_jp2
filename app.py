@@ -6,11 +6,11 @@ from PIL import Image
 from jpylyzer import jpylyzer
 import logging
 import time, os
-from pypdf2 import PdfReader
-import pypdf2
+from pypdf import PdfReader
+import pypdf
 import exiftoll
 
-EXIFTOOL_PATH = r'C:\Program Files\exiftool\exiftool(-k).exe'
+EXIFTOOL_PATH = r'C:\\Program Files\\exiftool\\exiftool(-k).exe'
 
 #timestr = time.strftime("%Y-%m%d")
 #timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -100,7 +100,7 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
         try:    
             #print (i)
             #print (commentinfo)
-            jp2_path = os.path.join(output_folder, f'p_{filename}.jp2')
+            jp2_path = os.path.join(output_folder, f'{filename}.jp2')
             
             ###jp2_path = os.path.join(output_folder, f'page_{i + 1}.jp2')
             #image.save(jp2_path, format='jp2', quality_mode='dB', quality_layers=[80])
@@ -177,7 +177,7 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
     # iterating over all files
     for files in os.listdir(output_folder):
         if files.endswith(ext):            
-            if(files.split('.jp2')[0].split('p_')[1] == filepdf):
+            if(files.split('.jp2')[0] == filepdf):
                 fileno = output_folder + "\\"+ files
                 # get the Title
                 if(dict(infofoo).get('Title') is None):                                       
