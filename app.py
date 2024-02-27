@@ -44,7 +44,7 @@ class FolderSelectorApp(QWidget):
         self.button_select_folder2 = QPushButton('Select Folder Output', self)
         self.button_select_folder2.clicked.connect(self.select_folder2)
 
-        self.button_run_function = QPushButton('PDF to JP2 Conversation', self)
+        self.button_run_function = QPushButton('PDF to JP2 Conversion', self)
         self.button_run_function.clicked.connect(self.run_function)
 
         layout = QVBoxLayout()
@@ -137,7 +137,7 @@ def crawl_finder(path_crawl, output_folder):
                         print(totalpages, z)
                         try:
                             convert_pdf_to_jp2(z, output_folder,i.split('.pdf')[0],infofoo)
-                            logger_pdf.info('File Name: ' + str(i) + " - jp2 coversation completed.")                                                         
+                            logger_pdf.info('File Name: ' + str(i) + " - jp2 conversion completed.")                                                         
                         except Exception as inst:
                             logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
                             print(type(inst))    # the exception type
