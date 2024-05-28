@@ -9,6 +9,7 @@ import time, os
 from pypdf import PdfReader
 import pypdf
 import exiftoll
+import subprocess
 
 EXIFTOOL_PATH = r'C:\\Program Files\\exiftool\\exiftool(-k).exe'
 
@@ -79,7 +80,8 @@ class FolderSelectorApp(QWidget):
             
             # Replace this function with your custom logic to run
             print(f'Running function with Folder Input: {self.folder_path1} and Folder Output: {self.folder_path2}')
-            crawl_finder(self.folder_path1, self.folder_path2)           
+            crawl_finder(self.folder_path1, self.folder_path2)
+            crawl_finder_tiff(self.folder_path2)           
             self.label4.setText('Process finished!')
             # setting up background color 
             self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
@@ -98,15 +100,16 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
     # Save each image as JP2 format
     for i, image in enumerate(images):
         try:    
-            #print (i)
-            #print (commentinfo)
-            jp2_path = os.path.join(output_folder, f'{filename}.jp2')
-            
+            #print (filename)
+            #print (commentinfo)            
+            filename_new = filename.replace('.', '_')
+            print (filename, filename_new)            
+            jp2_path = os.path.join(output_folder, f'{filename_new}.tiff')
             ###jp2_path = os.path.join(output_folder, f'page_{i + 1}.jp2')
             #image.save(jp2_path, format='jp2', quality_mode='dB', quality_layers=[80])
             #image.MAX_IMAGE_PIXELS = None
-            image.save(jp2_path, quality_mode='dB', quality_layers=[100], plt=True)
-             
+            #image.save(jp2_path, quality_mode='dB', quality_layers=[100], plt=True)
+            image.save(jp2_path, dpi=(300,300)) 
         except Exception as inst:                
                 logger_pdf.info('PDF File Name: ' + str(i) + " - No able to convert it to jp2.")
                 print(type(inst))    # the exception type
@@ -169,7 +172,8 @@ def crawl_finder(path_crawl, output_folder):
 
 def add_metadata_to_jp2(output_folder, filepdf, infofoo):
     # Convert PDF to images
-    ext = ('jp2')
+    #ext = ('jp2')
+    ext = ('tiff')
     # Create output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -177,7 +181,8 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
     # iterating over all files
     for files in os.listdir(output_folder):
         if files.endswith(ext):            
-            if(files.split('.jp2')[0] == filepdf):
+            #if(files.split('.jp2')[0] == filepdf):
+            if(files.split('.tiff')[0] == filepdf):
                 fileno = output_folder + "\\"+ files
                 # get the Title
                 if(dict(infofoo).get('Title') is None):                                       
@@ -243,7 +248,7 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
 # check if the jp2 are valid jpeg2000 images
 def delete_original_jp2(output_folder):
     print (output_folder)
-    ext1 = ('jp2_original')
+    ext1 = ('tiff_original')
     ext2 = ('jp2')
     dir_list = os.listdir(output_folder)    
     for files in os.listdir(output_folder):
@@ -297,6 +302,54 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
     l.setLevel(level)
     l.addHandler(fileHandler)
     l.addHandler(streamHandler)
+
+def convert_tiff_to_jp2(input_path, output_path):
+    # Check if the input file exists
+    if not os.path.exists(input_path):
+        print(f"Error: Input file '{input_path}' not found.")
+        return
+
+    # Run the grokj2k command for conversion    
+    command = [
+        r'C:/Program Files/grok12/bin/grk_compress.exe',
+        '-i', input_path,
+        '-o', output_path,  
+        '-p RLCP',
+        '-t 1024,1024',
+        '-EPH',
+        '-SOP'
+    ]
+    try:        
+        subprocess.run(command, check=True)
+        print(f"Conversion successful. JPEG 2000 image saved at '{output_path}'.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Conversion failed. {e}")    
+
+# inspect folder and subfolders and process all the files
+def crawl_finder_tiff(path_crawl):
+    for root, dir_names, file_names in os.walk(path_crawl):
+        #print (root)
+        dir_list = os.listdir(root)
+        for i in dir_list:
+            if(i.endswith('.tiff')):
+                #print (i.split('.pdf')[0])
+                
+                z = root + '\\' + i
+                #print(z)
+                if (os.path.isdir(z)):
+                    continue
+                else:
+                    try:
+                        out = path_crawl + "\\" + i.split('.')[0] + ".jp2"
+                        print (z,out)
+                        convert_tiff_to_jp2(z, out)
+                        os.remove(z)                    
+                        #logger_tif_description.info('File Name: ' + str(i)) 
+                    except:
+                        #logger_tif_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
+                        print('error')
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
