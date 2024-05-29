@@ -10,15 +10,13 @@ from pypdf import PdfReader
 import pypdf
 import exiftoll
 import subprocess
+import shutil
 
 EXIFTOOL_PATH = r'C:\\Program Files\\exiftool\\exiftool(-k).exe'
 
-#timestr = time.strftime("%Y-%m%d")
-#timestr = time.strftime("%Y%m%d-%H%M%S")
-
 logger_pdf = logging.getLogger('log_pdf')
 
-Image.MAX_IMAGE_PIXELS=None
+#Image.MAX_IMAGE_PIXELS=None
 
 class FolderSelectorApp(QWidget):
     def __init__(self):
@@ -36,8 +34,7 @@ class FolderSelectorApp(QWidget):
         self.label1 = QLabel('Input Folder:')
         self.label2 = QLabel('Output Folder:')
         self.label3 = QLabel('Click the button below to start the process!')
-        self.label4 = QLabel('')
-        
+        self.label4 = QLabel('')        
 
         self.button_select_folder1 = QPushButton('Select Folder Input', self)
         self.button_select_folder1.clicked.connect(self.select_folder1)
@@ -82,7 +79,7 @@ class FolderSelectorApp(QWidget):
             print(f'Running function with Folder Input: {self.folder_path1} and Folder Output: {self.folder_path2}')
             crawl_finder(self.folder_path1, self.folder_path2)
             crawl_finder_tiff(self.folder_path2)
-            listoutputfile(self.folder_path2)           
+            listoutputfile(self.folder_path2, self.folder_path1)           
             self.label4.setText('Process finished!')
             # setting up background color 
             self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
@@ -93,7 +90,7 @@ class FolderSelectorApp(QWidget):
 def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
     # Convert PDF to images
     images = convert_from_path(pdf_path, dpi=300)
-    print(images)
+    #print(images)
     # Create output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -104,7 +101,7 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
             #print (filename)
             #print (commentinfo)            
             filename_new = filename.replace('.', '_')
-            print (filename, filename_new)            
+            #print (filename, filename_new)            
             jp2_path = os.path.join(output_folder, f'{filename_new}.tiff')
             ###jp2_path = os.path.join(output_folder, f'page_{i + 1}.jp2')
             #image.save(jp2_path, format='jp2', quality_mode='dB', quality_layers=[80])
@@ -119,6 +116,11 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
 
 # inspect folder and subfolders and process all the files
 def crawl_finder(path_crawl, output_folder):
+    # List all files in the folder
+    files = os.listdir(path_crawl)
+    # Count the PDF files
+    pdf_count = str(sum(1 for file in files if file.lower().endswith('.pdf')))
+    logger_pdf.info('Number of PDF files to process: ' + pdf_count)
     logger_pdf.info('Convert PDF files to jp2: ')
     for root, dir_names, file_names in os.walk(path_crawl):
         #print (root)
@@ -136,7 +138,7 @@ def crawl_finder(path_crawl, output_folder):
                     totalpages = len(reader.pages)
                     if (totalpages > 1):
                         #print ("Log the name of the multipage pdf and skip the conversion")
-                        logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 coversation")                   
+                        logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 conversation")                   
                     else:
                         print(totalpages, z)
                         try:
@@ -274,8 +276,9 @@ def delete_original_jp2(output_folder):
                 print(inst)            
 
 # check if the jp2 are valid jpeg2000 images
-def listoutputfile(output_folder):
-    print (output_folder)    
+def listoutputfile(output_folder, destination_folder):
+    valid_jp2 = 0
+    #print (output_folder)    
     dir_list = os.listdir(output_folder)
     logger_pdf.info('Check if the jp2 files are valid: ')
     ext2 = ('.jp2')
@@ -286,14 +289,18 @@ def listoutputfile(output_folder):
             try:
                 # Analyse with jpylyzer, result to Element object
                 myResult = jpylyzer.checkOneFile(z)
-                status=myResult.findtext('isValid')
-                print ("STATUS")
+                status = myResult.findtext('isValid')                
                 print (status)
                 logger_pdf.info('File Name: ' + str(i) + " - Status: " + status)
+                valid_jp2 += 1
+                src_path = os.path.join(output_folder, i)
+                dst_path = os.path.join(destination_folder, i)
+                shutil.move(src_path, dst_path)
             except:
                 logger_pdf.info('File Name: ' + str(i) + " - No able to convert it to jp2000")
         else:
-            continue    
+            continue
+    logger_pdf.info('Number of valid JP2 moved to origin: ' + str(valid_jp2))
 # loggers
 def setup_logger(logger_name, log_file, level=logging.INFO):
     l = logging.getLogger(logger_name)
@@ -336,8 +343,7 @@ def crawl_finder_tiff(path_crawl):
         dir_list = os.listdir(root)
         for i in dir_list:
             if(i.endswith('.tiff')):
-                #print (i.split('.pdf')[0])
-                
+                #print (i.split('.pdf')[0])                
                 z = root + '\\' + i
                 #print(z)
                 if (os.path.isdir(z)):
