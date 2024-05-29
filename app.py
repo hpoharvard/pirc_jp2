@@ -183,7 +183,8 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
     for files in os.listdir(output_folder):
         if files.endswith(ext):            
             #if(files.split('.jp2')[0] == filepdf):
-            if(files.split('.tiff')[0] == filepdf):
+            
+            if(files.split('.tiff')[0] == filepdf.replace('.', '_')):
                 fileno = output_folder + "\\"+ files
                 # get the Title
                 if(dict(infofoo).get('Title') is None):                                       
