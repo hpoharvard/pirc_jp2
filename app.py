@@ -110,9 +110,9 @@ def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
             image.save(jp2_path, dpi=(300,300)) 
         except Exception as inst:                
                 logger_pdf.info('PDF File Name: ' + str(i) + " - No able to convert it to jp2.")
-                print(type(inst))    # the exception type
-                print(inst.args)     # arguments stored in .args
-                print(inst)
+                #print(type(inst))    # the exception type
+                #print(inst.args)     # arguments stored in .args
+                #print(inst)
 
 # inspect folder and subfolders and process all the files
 def crawl_finder(path_crawl, output_folder):
@@ -133,36 +133,36 @@ def crawl_finder(path_crawl, output_folder):
             else:
                 try:                    
                     infofoo = pdf2image.pdfinfo_from_path(z)
-                    print(infofoo)
+                    #print(infofoo)
                     reader = PdfReader(z)
                     totalpages = len(reader.pages)
                     if (totalpages > 1):
                         #print ("Log the name of the multipage pdf and skip the conversion")
                         logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 conversation")                   
                     else:
-                        print(totalpages, z)
+                        #print(totalpages, z)
                         try:
                             convert_pdf_to_jp2(z, output_folder,i.split('.pdf')[0],infofoo)
                             logger_pdf.info('File Name: ' + str(i) + " - jp2 conversion completed.")                                                         
                         except Exception as inst:
                             logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            print(type(inst))    # the exception type
-                            print(inst.args)     # arguments stored in .args
-                            print(inst)
+                            #print(type(inst))    # the exception type
+                            #print(inst.args)     # arguments stored in .args
+                            #print(inst)
                         try:
                             add_metadata_to_jp2(output_folder, i.split('.pdf')[0], infofoo)                            
                         except Exception as inst:
                             logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            print(type(inst))    # the exception type
-                            print(inst.args)     # arguments stored in .args
-                            print(inst)
+                            #print(type(inst))    # the exception type
+                            #print(inst.args)     # arguments stored in .args
+                            #print(inst)
                         try:                            
                             delete_original_jp2(output_folder)
                         except Exception as inst:
                             logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            print(type(inst))    # the exception type
-                            print(inst.args)     # arguments stored in .args
-                            print(inst)
+                            #print(type(inst))    # the exception type
+                            #print(inst.args)     # arguments stored in .args
+                            #print(inst)
                     
                     #
                     #print(str(reader.metadata))
@@ -191,54 +191,54 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
                 # get the Title
                 if(dict(infofoo).get('Title') is None):                                       
                     title = '-Title = NA'                    
-                    print (title)
+                    #print (title)
                 else:                     
                     if(infofoo['Title'] == ''):
                         title = '-Title = NA'                   
-                        print(title)
+                        #print(title)
                     else:
                         title = '-Title = ' + infofoo['Title']                    
-                        print(title)
+                        #print(title)
                 # get the Creator
                 if(dict(infofoo).get('Creator') is None):                          
                     creator = '-Creator = NA'
-                    print (creator)
+                    #print (creator)
                 else:
                     if(infofoo['Creator'] == ''):
                         creator = '-Creator = NA'
                     else:    
                         creator = '-Creator = ' + infofoo['Creator']
-                        print(creator)
+                        #print(creator)
                 # get the Author
                 if(dict(infofoo).get('Author') is None):                          
                     author = '-Author = NA'
-                    print (author)
+                    #print (author)
                 else:
                     if(infofoo['Author'] == ''):
                         author = '-Author = NA'
                     else:    
                         author = '-Author =' + infofoo['Author']
-                        print(author)
+                        #print(author)
                 # get the Producer
                 if(dict(infofoo).get('Producer') is None):                          
                     producer = '-Producer = NA'
-                    print (producer)
+                    #print (producer)
                 else:
                     if(infofoo['Producer'] == ''):
                         producer = '-Producer = NA'
                     else:
                         producer = '-Producer = ' + infofoo['Producer']
-                    print(producer)
+                    #print(producer)
                 # get the PDF version 
                 if(dict(infofoo).get('PDF version') is None):                          
                     pdfVersion = '-PDFVersion = NA'
-                    print (pdfVersion)
+                    #print (pdfVersion)
                 else:
                     if(infofoo['PDF version'] == ''):
                         pdfVersion = '-PDFVersion = NA'
                     else:    
                         pdfVersion = '-PDFVersion = ' + infofoo['PDF version']
-                        print(pdfVersion)   
+                        #print(pdfVersion)   
 
                 with exiftoll.exiftool.ExifTool(EXIFTOOL_PATH) as et:                
                     et.execute(bytes(title.encode()),bytes(fileno.encode())) # title
@@ -251,7 +251,7 @@ def add_metadata_to_jp2(output_folder, filepdf, infofoo):
 
 # check if the jp2 are valid jpeg2000 images
 def delete_original_jp2(output_folder):
-    print (output_folder)
+    #print (output_folder)
     ext1 = ('tiff_original')
     ext2 = ('jp2')
     dir_list = os.listdir(output_folder)    
@@ -260,20 +260,20 @@ def delete_original_jp2(output_folder):
             try:
                 # Analyse with jpylyzer, result to Element object
                 if files.endswith(ext1):
-                    print(files)
+                    #print(files)
                     os.remove(z)
                 elif files.endswith(ext2):
                     myResult = jpylyzer.checkOneFile(z)
                     status=myResult.findtext('isValid')
-                    print (status)
+                    #print (status)
                     #logger_validation.info('File Name: ' + str(i) + " - Status: " + status)
                 else:
                     continue
             except Exception as inst:
                 #logger_validation.info('File Name: ' + str(files) + " - No able to convert it to jp2000")
-                print(type(inst))    # the exception type
+                #print(type(inst))    # the exception type
                 print(inst.args)     # arguments stored in .args
-                print(inst)            
+                #print(inst)            
 
 # check if the jp2 are valid jpeg2000 images
 def listoutputfile(output_folder, destination_folder):
@@ -284,13 +284,13 @@ def listoutputfile(output_folder, destination_folder):
     ext2 = ('.jp2')
     for i in dir_list:        
         z = output_folder + '/' + i
-        print(z)
+        #print(z)
         if i.endswith(ext2):
             try:
                 # Analyse with jpylyzer, result to Element object
                 myResult = jpylyzer.checkOneFile(z)
                 status = myResult.findtext('isValid')                
-                print (status)
+                #print (status)
                 logger_pdf.info('File Name: ' + str(i) + " - Status: " + status)
                 valid_jp2 += 1
                 src_path = os.path.join(output_folder, i)
@@ -351,7 +351,7 @@ def crawl_finder_tiff(path_crawl):
                 else:
                     try:
                         out = path_crawl + "\\" + i.split('.')[0] + ".jp2"
-                        print (z,out)
+                        #print (z,out)
                         convert_tiff_to_jp2(z, out)
                         os.remove(z)                    
                         #logger_tif_description.info('File Name: ' + str(i)) 
