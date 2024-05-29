@@ -81,7 +81,8 @@ class FolderSelectorApp(QWidget):
             # Replace this function with your custom logic to run
             print(f'Running function with Folder Input: {self.folder_path1} and Folder Output: {self.folder_path2}')
             crawl_finder(self.folder_path1, self.folder_path2)
-            crawl_finder_tiff(self.folder_path2)           
+            crawl_finder_tiff(self.folder_path2)
+            listoutputfile(self.folder_path2)           
             self.label4.setText('Process finished!')
             # setting up background color 
             self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
@@ -168,7 +169,7 @@ def crawl_finder(path_crawl, output_folder):
                 except:
                     print('')
                     #logger_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-    listoutputfile(output_folder)
+    #listoutputfile(output_folder)
 
 def add_metadata_to_jp2(output_folder, filepdf, infofoo):
     # Convert PDF to images
@@ -276,14 +277,16 @@ def listoutputfile(output_folder):
     print (output_folder)    
     dir_list = os.listdir(output_folder)
     logger_pdf.info('Check if the jp2 files are valid: ')
-    ext2 = ('jp2')
+    ext2 = ('.jp2')
     for i in dir_list:        
         z = output_folder + '/' + i
+        print(z)
         if i.endswith(ext2):
             try:
                 # Analyse with jpylyzer, result to Element object
                 myResult = jpylyzer.checkOneFile(z)
                 status=myResult.findtext('isValid')
+                print ("STATUS")
                 print (status)
                 logger_pdf.info('File Name: ' + str(i) + " - Status: " + status)
             except:
