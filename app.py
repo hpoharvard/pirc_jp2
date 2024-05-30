@@ -138,7 +138,7 @@ def crawl_finder(path_crawl, output_folder):
                     totalpages = len(reader.pages)
                     if (totalpages > 1):
                         #print ("Log the name of the multipage pdf and skip the conversion")
-                        logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 conversation")                   
+                        logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 conversion.")                   
                     else:
                         #print(totalpages, z)
                         try:
