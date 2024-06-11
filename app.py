@@ -13,18 +13,16 @@ import subprocess
 import shutil
 
 EXIFTOOL_PATH = r'C:\\Program Files\\exiftool\\exiftool(-k).exe'
+GROK_COMPRESS_PATH = r'C:/Program Files/grok12/bin/grk_compress.exe'
 
 logger_pdf = logging.getLogger('log_pdf')
 
-#Image.MAX_IMAGE_PIXELS=None
 
 class FolderSelectorApp(QWidget):
     def __init__(self):
         super().__init__()
-
         self.folder_path1 = None
         self.folder_path2 = None
-
         self.init_ui()
 
     def init_ui(self):
@@ -34,7 +32,7 @@ class FolderSelectorApp(QWidget):
         self.label1 = QLabel('Input Folder:')
         self.label2 = QLabel('Output Folder:')
         self.label3 = QLabel('Click the button below to start the process!')
-        self.label4 = QLabel('')        
+        self.label4 = QLabel('')
 
         self.button_select_folder1 = QPushButton('Select Folder Input', self)
         self.button_select_folder1.clicked.connect(self.select_folder1)
@@ -60,305 +58,189 @@ class FolderSelectorApp(QWidget):
         folder_path = QFileDialog.getExistingDirectory(self, 'Select Folder Input')
         if folder_path:
             self.folder_path1 = folder_path
-            self.label1.setText(f'Folder Input : {self.folder_path1}')
-            self.label1.setStyleSheet("background-color: lightyellow; font-weight: bold; border: 1px solid black;") 
+            self.label1.setText(f'Folder Input: {self.folder_path1}')
+            self.label1.setStyleSheet("background-color: lightyellow; font-weight: bold; border: 1px solid black;")
 
     def select_folder2(self):
         folder_path = QFileDialog.getExistingDirectory(self, 'Select Folder Output')
         if folder_path:
             self.folder_path2 = folder_path
             self.label2.setText(f'Folder Output: {self.folder_path2}')
-            self.label2.setStyleSheet("background-color: lightyellow; font-weight: bold; border: 1px solid black;") 
+            self.label2.setStyleSheet("background-color: lightyellow; font-weight: bold; border: 1px solid black;")
 
     def run_function(self):
         if self.folder_path1 and self.folder_path2:
-            setup_logger('log_pdf', self.folder_path2 + r"\\log_pdf.txt")
-            logger_pdf.info('Start time: ' + str(time.strftime("%Y%m%d-%H%M%S")))
-            
-            # Replace this function with your custom logic to run
-            print(f'Running function with Folder Input: {self.folder_path1} and Folder Output: {self.folder_path2}')
-            crawl_finder(self.folder_path1, self.folder_path2)
-            crawl_finder_tiff(self.folder_path2)
-            listoutputfile(self.folder_path2, self.folder_path1)           
-            self.label4.setText('Process finished!')
-            # setting up background color 
-            self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
-            logger_pdf.info('End time: ' + str(time.strftime("%Y%m%d-%H%M%S")))
-        else:
-            print('Please select both folders before running the function.')
+            setup_logger('log_pdf', os.path.join(self.folder_path2, "log_pdf.txt"))
+            logger_pdf.info(f'Start time: {time.strftime("%Y%m%d-%H%M%S")}')
+            self.label4.setText('Processing...')
+            self.label4.setStyleSheet("background-color: lightblue; font-weight: bold; border: 1px solid black;")
 
-def convert_pdf_to_jp2(pdf_path, output_folder, filename, commentinfo):
-    # Convert PDF to images
+            try:
+                crawl_finder(self.folder_path1, self.folder_path2)
+                crawl_finder_tiff(self.folder_path2)
+                self.label4.setText('Process finished!')
+                self.label4.setStyleSheet("background-color: lightgreen; font-weight: bold; border: 1px solid black;")
+            except Exception as e:
+                self.label4.setText(f'Error: {str(e)}')
+                self.label4.setStyleSheet("background-color: red; font-weight: bold; border: 1px solid black;")
+                logger_pdf.error(f'Error during processing: {str(e)}')
+
+            logger_pdf.info(f'End time: {time.strftime("%Y%m%d-%H%M%S")}')
+        else:
+            self.label4.setText('Please select both folders before running the function.')
+            self.label4.setStyleSheet("background-color: yellow; font-weight: bold; border: 1px solid black;")
+
+
+def convert_pdf_to_tiff(pdf_path: str, output_folder: str, filename: str) -> str:
     images = convert_from_path(pdf_path, dpi=300)
-    #print(images)
-    # Create output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # Save each image as JP2 format
+    tiff_path = ""
     for i, image in enumerate(images):
-        try:    
-            #print (filename)
-            #print (commentinfo)            
+        try:
             filename_new = filename.replace('.', '_')
-            #print (filename, filename_new)            
-            jp2_path = os.path.join(output_folder, f'{filename_new}.tiff')
-            ###jp2_path = os.path.join(output_folder, f'page_{i + 1}.jp2')
-            #image.save(jp2_path, format='jp2', quality_mode='dB', quality_layers=[80])
-            #image.MAX_IMAGE_PIXELS = None
-            #image.save(jp2_path, quality_mode='dB', quality_layers=[100], plt=True)
-            image.save(jp2_path, dpi=(300,300)) 
-        except Exception as inst:                
-                logger_pdf.info('PDF File Name: ' + str(i) + " - No able to convert it to jp2.")
-                #print(type(inst))    # the exception type
-                #print(inst.args)     # arguments stored in .args
-                #print(inst)
+            tiff_path = os.path.join(output_folder, f'{filename_new}.tiff')
+            image.save(tiff_path, dpi=(300, 300))
+        except Exception as e:
+            logger_pdf.error(f'PDF File Name: {filename} - Unable to convert to TIFF. Error: {str(e)}')
+    return tiff_path
 
-# inspect folder and subfolders and process all the files
-def crawl_finder(path_crawl, output_folder):
-    # List all files in the folder
-    files = os.listdir(path_crawl)
-    # Count the PDF files
-    pdf_count = str(sum(1 for file in files if file.lower().endswith('.pdf')))
-    logger_pdf.info('Number of PDF files to process: ' + pdf_count)
-    logger_pdf.info('Convert PDF files to jp2: ')
-    for root, dir_names, file_names in os.walk(path_crawl):
-        #print (root)
-        dir_list = os.listdir(root)
-        for i in dir_list:
-            #print (i.split('.pdf')[0])
-            z = root + '\\' + i            
-            if (os.path.isdir(z)):
-                continue
-            else:
-                try:                    
-                    infofoo = pdf2image.pdfinfo_from_path(z)
-                    #print(infofoo)
-                    reader = PdfReader(z)
-                    totalpages = len(reader.pages)
-                    if (totalpages > 1):
-                        #print ("Log the name of the multipage pdf and skip the conversion")
-                        logger_pdf.info('File Name: ' + str(i) + " - Multipage PDF. No jp2 conversion.")                   
-                    else:
-                        #print(totalpages, z)
-                        try:
-                            convert_pdf_to_jp2(z, output_folder,i.split('.pdf')[0],infofoo)
-                            logger_pdf.info('File Name: ' + str(i) + " - jp2 conversion completed.")                                                         
-                        except Exception as inst:
-                            logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            #print(type(inst))    # the exception type
-                            #print(inst.args)     # arguments stored in .args
-                            #print(inst)
-                        try:
-                            add_metadata_to_jp2(output_folder, i.split('.pdf')[0], infofoo)                            
-                        except Exception as inst:
-                            logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            #print(type(inst))    # the exception type
-                            #print(inst.args)     # arguments stored in .args
-                            #print(inst)
-                        try:                            
-                            delete_original_jp2(output_folder)
-                        except Exception as inst:
-                            logger_pdf.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                            #print(type(inst))    # the exception type
-                            #print(inst.args)     # arguments stored in .args
-                            #print(inst)
-                    
-                    #
-                    #print(str(reader.metadata))
-                    #print(str(reader.pdf_header))
-                    #logger_description.info('File Name: ' + str(i) + " - PDF Metadata: " + str(reader.metadata).replace("'",'').replace('{','').replace('}','').replace('/','') + " - PDF Version: " + str(reader.pdf_header)) 
-                except:
-                    print('')
-                    #logger_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-    #listoutputfile(output_folder)
 
-def add_metadata_to_jp2(output_folder, filepdf, infofoo):
-    # Convert PDF to images
-    #ext = ('jp2')
-    ext = ('tiff')
-    # Create output folder if it doesn't exist
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # iterating over all files
-    for files in os.listdir(output_folder):
-        if files.endswith(ext):            
-            #if(files.split('.jp2')[0] == filepdf):
-            
-            if(files.split('.tiff')[0] == filepdf.replace('.', '_')):
-                fileno = output_folder + "\\"+ files
-                # get the Title
-                if(dict(infofoo).get('Title') is None):                                       
-                    title = '-Title = NA'                    
-                    #print (title)
-                else:                     
-                    if(infofoo['Title'] == ''):
-                        title = '-Title = NA'                   
-                        #print(title)
-                    else:
-                        title = '-Title = ' + infofoo['Title']                    
-                        #print(title)
-                # get the Creator
-                if(dict(infofoo).get('Creator') is None):                          
-                    creator = '-Creator = NA'
-                    #print (creator)
-                else:
-                    if(infofoo['Creator'] == ''):
-                        creator = '-Creator = NA'
-                    else:    
-                        creator = '-Creator = ' + infofoo['Creator']
-                        #print(creator)
-                # get the Author
-                if(dict(infofoo).get('Author') is None):                          
-                    author = '-Author = NA'
-                    #print (author)
-                else:
-                    if(infofoo['Author'] == ''):
-                        author = '-Author = NA'
-                    else:    
-                        author = '-Author =' + infofoo['Author']
-                        #print(author)
-                # get the Producer
-                if(dict(infofoo).get('Producer') is None):                          
-                    producer = '-Producer = NA'
-                    #print (producer)
-                else:
-                    if(infofoo['Producer'] == ''):
-                        producer = '-Producer = NA'
-                    else:
-                        producer = '-Producer = ' + infofoo['Producer']
-                    #print(producer)
-                # get the PDF version 
-                if(dict(infofoo).get('PDF version') is None):                          
-                    pdfVersion = '-PDFVersion = NA'
-                    #print (pdfVersion)
-                else:
-                    if(infofoo['PDF version'] == ''):
-                        pdfVersion = '-PDFVersion = NA'
-                    else:    
-                        pdfVersion = '-PDFVersion = ' + infofoo['PDF version']
-                        #print(pdfVersion)   
-
-                with exiftoll.exiftool.ExifTool(EXIFTOOL_PATH) as et:                
-                    et.execute(bytes(title.encode()),bytes(fileno.encode())) # title
-                    et.execute(bytes(creator.encode()),bytes(fileno.encode())) # creator
-                    et.execute(bytes(author.encode()),bytes(fileno.encode())) # author
-                    et.execute(bytes(producer.encode()),bytes(fileno.encode())) # producer
-                    et.execute(bytes(pdfVersion.encode()),bytes(fileno.encode())) # pdfVersion                    
-        else:
-            continue    
-
-# check if the jp2 are valid jpeg2000 images
-def delete_original_jp2(output_folder):
-    #print (output_folder)
-    ext1 = ('tiff_original')
-    ext2 = ('jp2')
-    dir_list = os.listdir(output_folder)    
-    for files in os.listdir(output_folder):
-            z = output_folder + '/' + files        
-            try:
-                # Analyse with jpylyzer, result to Element object
-                if files.endswith(ext1):
-                    #print(files)
-                    os.remove(z)
-                elif files.endswith(ext2):
-                    myResult = jpylyzer.checkOneFile(z)
-                    status=myResult.findtext('isValid')
-                    #print (status)
-                    #logger_validation.info('File Name: ' + str(i) + " - Status: " + status)
-                else:
-                    continue
-            except Exception as inst:
-                #logger_validation.info('File Name: ' + str(files) + " - No able to convert it to jp2000")
-                #print(type(inst))    # the exception type
-                print(inst.args)     # arguments stored in .args
-                #print(inst)            
-
-# check if the jp2 are valid jpeg2000 images
-def listoutputfile(output_folder, destination_folder):
-    valid_jp2 = 0
-    #print (output_folder)    
-    dir_list = os.listdir(output_folder)
-    logger_pdf.info('Check if the jp2 files are valid: ')
-    ext2 = ('.jp2')
-    for i in dir_list:        
-        z = output_folder + '/' + i
-        #print(z)
-        if i.endswith(ext2):
-            try:
-                # Analyse with jpylyzer, result to Element object
-                myResult = jpylyzer.checkOneFile(z)
-                status = myResult.findtext('isValid')                
-                #print (status)
-                logger_pdf.info('File Name: ' + str(i) + " - Status: " + status)
-                valid_jp2 += 1
-                src_path = os.path.join(output_folder, i)
-                dst_path = os.path.join(destination_folder, i)
-                shutil.move(src_path, dst_path)
-            except:
-                logger_pdf.info('File Name: ' + str(i) + " - No able to convert it to jp2000")
-        else:
-            continue
-    logger_pdf.info('Number of valid JP2 moved to origin: ' + str(valid_jp2))
-# loggers
-def setup_logger(logger_name, log_file, level=logging.INFO):
-    l = logging.getLogger(logger_name)
-    formatter = logging.Formatter('%(message)s')
-    fileHandler = logging.FileHandler(log_file, mode='w')
-    fileHandler.setFormatter(formatter)
-    streamHandler = logging.StreamHandler()
-    streamHandler.setFormatter(formatter)
-
-    l.setLevel(level)
-    l.addHandler(fileHandler)
-    l.addHandler(streamHandler)
-
-def convert_tiff_to_jp2(input_path, output_path):
-    # Check if the input file exists
+def convert_tiff_to_jp2(input_path: str, output_path: str) -> None:
     if not os.path.exists(input_path):
-        print(f"Error: Input file '{input_path}' not found.")
+        logger_pdf.error(f"Input file '{input_path}' not found.")
         return
 
-    # Run the grokj2k command for conversion    
     command = [
-        r'C:/Program Files/grok12/bin/grk_compress.exe',
+        GROK_COMPRESS_PATH,
         '-i', input_path,
-        '-o', output_path,  
-        '-p RLCP',
-        '-t 1024,1024',
+        '-o', output_path,
+        '-p', 'RLCP',
+        '-t', '1024,1024',
         '-EPH',
         '-SOP'
     ]
-    try:        
+    try:
         subprocess.run(command, check=True)
-        print(f"Conversion successful. JPEG 2000 image saved at '{output_path}'.")
+        logger_pdf.info(f"Conversion successful. JPEG 2000 image saved at '{output_path}'.")
     except subprocess.CalledProcessError as e:
-        print(f"Error: Conversion failed. {e}")    
+        logger_pdf.error(f"Conversion failed. Error: {e}")
 
-# inspect folder and subfolders and process all the files
-def crawl_finder_tiff(path_crawl):
-    for root, dir_names, file_names in os.walk(path_crawl):
-        #print (root)
-        dir_list = os.listdir(root)
-        for i in dir_list:
-            if(i.endswith('.tiff')):
-                #print (i.split('.pdf')[0])                
-                z = root + '\\' + i
-                #print(z)
-                if (os.path.isdir(z)):
+#def crawl_finder(path_crawl, output_folder):
+def crawl_finder(path_crawl: str, output_folder: str) -> None:
+    pdf_count = 0
+    valid_jp2 = 0
+    # Walk through the folder and its subfolders
+    for root, _, files in os.walk(path_crawl):
+        # Count the PDF files in the current directory
+        pdf_count += sum(1 for file in files if file.lower().endswith('.pdf'))    
+       
+    logger_pdf.info(f'Number of PDF files to process: {pdf_count}')
+    logger_pdf.info('Convert PDF files to JP2: ')
+    logger_pdf.info('')
+
+    for root, _, file_names in os.walk(path_crawl):
+        for file_name in file_names:
+            file_path = os.path.join(root, file_name)
+            if os.path.isdir(file_path):
+                continue
+            if file_name.lower().endswith('.pdf'):
+                try:
+                    infofoo = pdf2image.pdfinfo_from_path(file_path)
+                    reader = PdfReader(file_path)
+                    totalpages = len(reader.pages)
+
+                    if totalpages > 1:
+                        logger_pdf.info(f'File Name: {file_name} - Multipage PDF. No JP2 conversion.')
+                    else:
+                        try:
+                            tiff_path = convert_pdf_to_tiff(file_path, output_folder, file_name.split('.pdf')[0])
+                            jp2_path = os.path.join(output_folder, f"{file_name.split('.pdf')[0]}.jp2")
+                            convert_tiff_to_jp2(tiff_path, jp2_path)
+                            os.remove(tiff_path)
+                            # Analyse with jpylyzer, result to Element object
+                            myResult = jpylyzer.checkOneFile(jp2_path)
+                            status = myResult.findtext('isValid')
+                            print (status)
+                            if status:                             
+                                valid_jp2 += 1
+                                move_jp2_to_original_folder(jp2_path, root)
+                            logger_pdf.info(f'File Name: {file_name} - JP2 conversion completed.')
+                        except Exception as e:
+                            logger_pdf.error(f'File Name: {file_name} - Unable to convert to JP2. Error: {str(e)}')
+                        try:
+                            add_metadata_to_jp2(jp2_path, infofoo)
+                        except Exception as e:
+                            logger_pdf.error(f'File Name: {file_name} - Unable to add metadata. Error: {str(e)}')
+
+                except Exception as e:
+                    logger_pdf.error(f'File Name: {file_name} - Error during processing. Error: {str(e)}')
+    logger_pdf.info('')
+    logger_pdf.info(f'Number of valid JP2 moved to origin: {valid_jp2} ')    
+
+def add_metadata_to_jp2(jp2_path: str, infofoo: dict) -> None:
+    metadata_commands = []
+
+    title = f'-Title={infofoo.get("Title", "NA") or "NA"}'
+    creator = f'-Creator={infofoo.get("Creator", "NA") or "NA"}'
+    author = f'-Author={infofoo.get("Author", "NA") or "NA"}'
+    producer = f'-Producer={infofoo.get("Producer", "NA") or "NA"}'
+    pdf_version = f'-PDFVersion={infofoo.get("PDF version", "NA") or "NA"}'
+
+    metadata_commands.extend([title, creator, author, producer, pdf_version])
+
+    with exiftoll.exiftool.ExifTool(EXIFTOOL_PATH) as et:
+        for command in metadata_commands:
+            et.execute(bytes(command.encode()), bytes(jp2_path.encode()))
+
+
+def delete_original_tiff(output_folder: str) -> None:
+    ext1 = 'tiff_original'
+    for file_name in os.listdir(output_folder):
+        file_path = os.path.join(output_folder, file_name)
+        try:
+            if file_name.endswith(ext1):
+                os.remove(file_path)
+        except Exception as e:
+            logger_pdf.error(f'File Name: {file_name} - Error during validation. Error: {str(e)}')
+
+
+def move_jp2_to_original_folder(jp2_file: str, original_folder: str) -> None:
+    if os.path.exists(jp2_file):
+        shutil.move(jp2_file, original_folder)
+        logger_pdf.info(f'Moved JP2 file {jp2_file} back to {original_folder}')
+    else:
+        logger_pdf.error(f'JP2 file {jp2_file} not found in {os.path.dirname(jp2_file)}')
+
+
+def setup_logger(logger_name: str, log_file: str, level=logging.INFO) -> None:
+    logger = logging.getLogger(logger_name)
+    if not logger.handlers:
+        formatter = logging.Formatter('%(message)s')
+        file_handler = logging.FileHandler(log_file, mode='w')
+        file_handler.setFormatter(formatter)
+        stream_handler = logging.StreamHandler()
+        stream_handler.setFormatter(formatter)
+        logger.setLevel(level)
+        logger.addHandler(file_handler)
+        logger.addHandler(stream_handler)
+
+
+def crawl_finder_tiff(path_crawl: str) -> None:
+    for root, _, file_names in os.walk(path_crawl):
+        for file_name in file_names:
+            if file_name.lower().endswith('.tiff'):
+                file_path = os.path.join(root, file_name)
+                if os.path.isdir(file_path):
                     continue
-                else:
-                    try:
-                        out = path_crawl + "\\" + i.split('.')[0] + ".jp2"
-                        #print (z,out)
-                        convert_tiff_to_jp2(z, out)
-                        os.remove(z)                    
-                        #logger_tif_description.info('File Name: ' + str(i)) 
-                    except:
-                        #logger_tif_description.info('File Name: ' + str(i) + " - No able to covert to jp2000")
-                        print('error')
-
+                try:
+                    jp2_path = os.path.join(root, f"{os.path.splitext(file_name)[0]}.jp2")
+                    convert_tiff_to_jp2(file_path, jp2_path)
+                    os.remove(file_path)
+                    move_jp2_to_original_folder(jp2_path, root)
+                except Exception as e:
+                    logger_pdf.error(f'File Name: {file_name} - Unable to convert to JP2. Error: {str(e)}')
 
 
 if __name__ == '__main__':
