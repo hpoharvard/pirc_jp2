@@ -9,3 +9,10 @@ Those are pyhton scripts to convert PDF and TIF to jp2
 Besides the python libraries there are two software requirements:
 1. exiftoll - https://exiftool.org/
 2. grok12 - https://github.com/GrokImageCompression/grok/releases
+
+Install process:
+1. Install Python CONDA (https://www.anaconda.com/)
+2. Download and install the exiftool tool (https://exiftool.org/)
+3. Copy the folder "production" from R drive (R:\GIS\Client\PIRC\2024\pdf2jp2) to your C drive or download this git repo.
+4. Run the batch file setup_env.bat (make sure the minicoda3 paths are correct)
+5. Modify the files app.bat and app.py from the folder "production" to match your conda path
